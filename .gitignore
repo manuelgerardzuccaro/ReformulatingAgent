@@ -1,0 +1,5 @@
+﻿.env
+.venv
+__marimo__
+__pycache__
+marimo-env
