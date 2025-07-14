@@ -7,7 +7,6 @@ app = marimo.App(width="medium")
 @app.cell
 def _():
     import marimo as mo
-    print ("")
     return
 
 
@@ -18,13 +17,13 @@ def _():
     import argparse
     import sys
 
-    # Configurazione Ollama
+    # Ollama Configuration
     OLLAMA_URL = "http://localhost:11434/v1"
     MODEL_NAME = "codellama"
 
-    # Tipi di stile supportati
-    Style = Literal["ironico", "empatico", "professionale", "poetico"]
-    STYLES = ["ironico", "empatico", "professionale", "poetico"]
+    # Supported style types
+    Style = Literal["ironic", "empathetic", "professional", "poetic"]
+    STYLES = ["ironic", "empathetic", "professional", "poetic"]
 
     return MODEL_NAME, OLLAMA_URL, STYLES, argparse, requests, sys
 
@@ -33,9 +32,9 @@ def _():
 def _(MODEL_NAME, OLLAMA_URL, requests, sys):
     def rewrite_text(text: str, style: str, model: str = MODEL_NAME) -> str:
         """
-        Invia una richiesta al modello locale per riscrivere il testo secondo lo stile scelto.
+        Send a request to the local model to rewrite the text according to the chosen style.
         """
-        prompt = f"Riscrivi il seguente testo in stile {style}:\n" + text
+        prompt = f"Rewrite the following text in {style} style:\n" + text
 
         payload = {
             "model": model,
@@ -48,7 +47,7 @@ def _(MODEL_NAME, OLLAMA_URL, requests, sys):
             response = requests.post(f"{OLLAMA_URL}/completions", json=payload)
             response.raise_for_status()
         except requests.RequestException as e:
-            print(f"Errore nella chiamata a Ollama: {e}", file=sys.stderr)
+            print(f"Error calling Ollama: {e}", file=sys.stderr)
             sys.exit(1)
 
         data = response.json()
@@ -60,12 +59,12 @@ def _(MODEL_NAME, OLLAMA_URL, requests, sys):
 @app.cell
 def _(STYLES, argparse):
     def prompt_interactive() -> argparse.Namespace:
-        text = input("Inserisci il testo da riscrivere: ")
+        text = input("Enter the text to rewrite: ")
         style = None
         while style not in STYLES:
-            style = input(f"Scegli lo stile ({', '.join(STYLES)}): ")
+            style = input(f"Choose the style ({', '.join(STYLES)}): ")
             if style not in STYLES:
-                print(f"Stile non valido, riprova.")
+                print(f"Invalid style, please try again.")
         return argparse.Namespace(text=text, style=style)
     return (prompt_interactive,)
 
@@ -74,23 +73,23 @@ def _(STYLES, argparse):
 def _(STYLES, argparse, prompt_interactive, rewrite_text):
     def main():
         parser = argparse.ArgumentParser(
-            description="Agent AI per riscrittura creativa e reframing"
+            description="AI Agent for Creative Rewriting and Reframing"
         )
         parser.add_argument(
-            "-t", "--text", help="Testo da riscrivere"
+            "-t", "--text", help="Text to be rewritten"
         )
         parser.add_argument(
-            "-s", "--style", choices=STYLES, help="Stile di riscrittura"
+            "-s", "--style", choices=STYLES, help="Rewriting style"
         )
         args = parser.parse_args()
 
-        # Se mancano argomenti, usa interattivo
+        # If args are missing, use interactive
         if not args.text or not args.style:
-            print("Modalità interattiva: mancano argomenti CLI.")
+            print("Interactive mode: CLI arguments missing.")
             args = prompt_interactive()
 
         output = rewrite_text(args.text, args.style)
-        print("\nTesto riscritto:\n")
+        print("\nRewritten text:\n")
         print(output)
 
 

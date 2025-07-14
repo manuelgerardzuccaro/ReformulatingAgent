@@ -6,7 +6,7 @@ An AI agent for creative rewriting and reframing of text (emails, essays, tweets
 
 ## Features
 
-- **Multi‑style rewriting**: choose from “ironico”, “empatico”, “professionale” and “poetico”.
+- **Multi‑style rewriting**: choose from "ironic", "empathetic", "professional", "poetic".
 - **Interactive CLI**: enter text and select a style in the terminal, or pass arguments via command line.
 - **Powered by Ollama**: leverages a local model (e.g. `codellama`) running on Ollama.
 - **Easily extensible**: add new styles or models by updating just a few lines of code.
@@ -43,7 +43,7 @@ MODEL_NAME = "codellama"
 ### Non‑interactive mode
 Pass text and style directly:
 ```bash
-python Project.py -t "The meeting has been postponed until tomorrow." -s ironico
+python Project.py -t "The meeting has been postponed until tomorrow." -s ironic
 ```
 ### Interactive mode
 Run without arguments to be guided step‑by‑step:
