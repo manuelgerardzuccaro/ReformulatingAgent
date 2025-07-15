@@ -17,10 +17,48 @@ def _():
     # File where to store styles (name -> description)
     STYLES_FILE = Path("styles.json")
 
-    # Ollama Configuration
-    OLLAMA_URL = "http://localhost:11434/v1"
-    MODEL_NAME = "codellama"
-    return MODEL_NAME, OLLAMA_URL, STYLES_FILE, argparse, json, requests, sys
+    # External configuration file
+    CONFIG_FILE = Path("config.json")
+
+    def load_config(path: Path) -> dict:
+        """
+        Load settings from config.json.
+        """
+        if not path.exists():
+            print(f"Config file {path} not found.", file=sys.stderr)
+            sys.exit(1)
+        try:
+            with path.open("r", encoding="utf-8") as f:
+                cfg = json.load(f)
+            # Minimum validation
+            required = ["OLLAMA_URL", "MODEL_NAME", "max_tokens", "temperature"]
+            for key in required:
+                if key not in cfg:
+                    raise KeyError(f"Missing key in config: {key}")
+            return cfg
+        except (json.JSONDecodeError, KeyError) as e:
+            print(f"Error loading config: {e}", file=sys.stderr)
+            sys.exit(1)
+
+    # Load the configuration
+    cfg = load_config(CONFIG_FILE)
+
+    # Extract global variables
+    OLLAMA_URL = cfg["OLLAMA_URL"]
+    MODEL_NAME = cfg["MODEL_NAME"]
+    MAX_TOKENS = cfg["max_tokens"]
+    TEMPERATURE = cfg["temperature"]
+    return (
+        MAX_TOKENS,
+        MODEL_NAME,
+        OLLAMA_URL,
+        STYLES_FILE,
+        TEMPERATURE,
+        argparse,
+        json,
+        requests,
+        sys,
+    )
 
 
 @app.cell
@@ -65,7 +103,7 @@ def _(STYLES_FILE, json, sys):
 
 
 @app.cell
-def _(MODEL_NAME, OLLAMA_URL, requests, sys):
+def _(MAX_TOKENS, MODEL_NAME, OLLAMA_URL, TEMPERATURE, requests, sys):
     def rewrite_text(text: str, style_name: str, style_desc: str, model: str = MODEL_NAME) -> str:
         """
         Send a request to the local model to rewrite the text according to the chosen style.
@@ -75,8 +113,8 @@ def _(MODEL_NAME, OLLAMA_URL, requests, sys):
         payload = {
             "model": model,
             "prompt": prompt,
-            "max_tokens": 512,
-            "temperature": 0.7,
+            "max_tokens": MAX_TOKENS,
+            "temperature": TEMPERATURE,
         }
 
         try:
@@ -128,12 +166,12 @@ def _(STYLES: dict[str, str], STYLES_FILE, rewrite_text, save_styles):
         """
         text = input("\nEnter the text to rewrite: ")
         print("Available styles:")
-    
+
         for style, desc in STYLES.items():
             print(f"- {style}: {desc}")
 
         choice = None
-    
+
         while choice not in STYLES:
             choice = input("Choose the style name to apply: ").strip()
             if choice not in STYLES:
