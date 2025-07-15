@@ -7,11 +7,6 @@ app = marimo.App(width="medium")
 @app.cell
 def _():
     import marimo as mo
-    return
-
-
-@app.cell
-def _():
     import requests
     from typing import Literal, Optional
     import argparse
@@ -52,8 +47,43 @@ def _(MODEL_NAME, OLLAMA_URL, requests, sys):
 
         data = response.json()
         return data.get("choices", [{}])[0].get("text", "")
-
     return (rewrite_text,)
+
+
+@app.cell
+def _(STYLES, rewrite_text):
+    def show_menu():
+        print("\n=== Main Menu ===")
+        print("1) Add a new style")
+        print("2) Rewrite the text")
+        print("3) Quit")
+        choice = input("Select an option (1-3): ")
+        return choice.strip()
+
+
+    def add_style():
+        new_style = input("Enter the name of the new style: ").strip()
+        if not new_style:
+            print("Invalid style name.")
+        elif new_style in STYLES:
+            print(f"The '{new_style}' style already exists.")
+        else:
+            STYLES.append(new_style)
+            print(f"'{new_style}' style added.")
+
+
+    def interactive_rewrite():
+        text = input("\nEnter the text to rewrite: ")
+        print("Available styles: " + ", ".join(STYLES))
+        style = None
+        while style not in STYLES:
+            style = input("Choose the style to apply: ").strip()
+            if style not in STYLES:
+                print("Invalid style, please try again.")
+        output = rewrite_text(text, style)
+        print("\nRewritten text:\n")
+        print(output)
+    return add_style, interactive_rewrite, show_menu
 
 
 @app.cell
@@ -66,31 +96,23 @@ def _(STYLES, argparse):
             if style not in STYLES:
                 print(f"Invalid style, please try again.")
         return argparse.Namespace(text=text, style=style)
-    return (prompt_interactive,)
+    return
 
 
 @app.cell
-def _(STYLES, argparse, prompt_interactive, rewrite_text):
+def _(add_style, interactive_rewrite, show_menu):
     def main():
-        parser = argparse.ArgumentParser(
-            description="AI Agent for Creative Rewriting and Reframing"
-        )
-        parser.add_argument(
-            "-t", "--text", help="Text to be rewritten"
-        )
-        parser.add_argument(
-            "-s", "--style", choices=STYLES, help="Rewriting style"
-        )
-        args = parser.parse_args()
-
-        # If args are missing, use interactive
-        if not args.text or not args.style:
-            print("Interactive mode: CLI arguments missing.")
-            args = prompt_interactive()
-
-        output = rewrite_text(args.text, args.style)
-        print("\nRewritten text:\n")
-        print(output)
+        while True:
+            choice = show_menu()
+            if choice == '1':
+                add_style()
+            elif choice == '2':
+                interactive_rewrite()
+            elif choice == '3':
+                print("Exit. Goodbye!")
+                break
+            else:
+                print("Invalid choice, try again.")
 
 
     if __name__ == "__main__":
